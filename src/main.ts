@@ -83,25 +83,34 @@ const clearScreen = () => {
 };
 
 ctx.strokeStyle = "red";
-let myTriangle = new Triangle(cx, cy, R);
-let myTriangle2 = new Triangle(cx - 10, cy - 10, R);
-let myTriangle3 = new Triangle(cx - 20, cy - 20, R);
-let myTriangle4 = new Triangle(cx - 30, cy - 30, R);
+
+let triangles: Triangle[] = [];
+for (let i = 0; i < 80; i++)
+{
+    const triangle = new Triangle(cx, cy, R);
+    triangles.push(triangle);
+    cx -= 5;
+    cy -= 5;
+}
 
 const launchAnim = () => {
     clearScreen();
     ctx.fillStyle = "rgb(255, 0, 0)";
-    myTriangle.draw();
-    myTriangle2.draw();
-    myTriangle3.draw();
-    myTriangle4.draw();
+    let deg = 1;
+    for (const triangle of triangles)
+    {
+        triangle.draw();
+        triangle.updateDegrees(deg);
+        deg += 0.005;
+
+    }
     // myTriangle.update(1);
     // if (myTriangle.v1.x > ctx.canvas.width && myTriangle.v2.x > ctx.canvas.width && myTriangle.v3.x > ctx.canvas.width)
-    // {
-        myTriangle.updateDegrees(1);
-        myTriangle2.updateDegrees(1);
-        myTriangle3.updateDegrees(1);
-        myTriangle4.updateDegrees(1);
+    // // {
+    //     myTriangle.updateDegrees(1);
+    //     myTriangle2.updateDegrees(1.1);
+    //     myTriangle3.updateDegrees(1.2);
+    //     myTriangle4.updateDegrees(1.3);
         // cx = 0;
         // myTriangle.setVertices();
     // }

@@ -6,6 +6,8 @@ import { setupCounter } from './counter.ts'
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <canvas id="canvas"></canvas>
 `
+let clearFillStyle: number = 1;
+
 var canvasElement = document.querySelector("#canvas");
 var ctx = canvasElement!.getContext("2d");
 // the width of the canvas
@@ -16,7 +18,7 @@ let ch = (canvasElement.height = 1000),
   cy = ch / 2;
   //your data
 
-let L = 50;
+let L = 20;
 
 let R = (L *.5) / Math.cos(Math.PI/6);
 
@@ -158,7 +160,10 @@ class Triangle {
 }
 
 const clearScreen = () => {
-    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = `rgba(0, 0, 0, ${clearFillStyle})`;
+    ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.globalCompositeOperation = 'source-over';
 };
 
 ctx.strokeStyle = "red";
@@ -192,6 +197,7 @@ document.addEventListener("click", (event) => {
 const launchAnim = () => {
     clearScreen();
     let deg = 1;
+    clearFillStyle = 0.05;
     for (const triangle of triangles)
     {
         // ctx.fillStyle = "rgb(255, 0, 0)";

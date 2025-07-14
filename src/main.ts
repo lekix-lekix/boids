@@ -25,6 +25,10 @@ ctx.beginPath();
 ctx.arc(cx, cy, R, 0, 2 * Math.PI);
 ctx.stroke();
 
+const lerp = (a: number, b: number, t: number) => {
+    return (a * (1 - t) + b * t);
+}
+
 class Triangle {
     public x: number;
     public y: number;
@@ -36,7 +40,10 @@ class Triangle {
     public target: {x: number, y: number};
     private angle: number = 0;
     private maxTurn: number = 0.05;
+    public allTriangles: Triangle[] = [];
+    public neighbours: Triangle[] = [];
     public targetAngle: number = 0;
+    public desiredAngle: number = 0;
 
     constructor(xArg: number, yArg:number, RArg:number) {
         this.x = xArg;
@@ -96,30 +103,57 @@ class Triangle {
         const dy = yDir * 2;
         this.x += dx;
         this.y += dy;
-        // this.v1.x += dx;
-        // this.v1.y += dy;
-        // this.v2.x += dx;
-        // this.v2.y += dy;
-        // this.v3.x += dx;
-        // this.v3.y += dy;
+    }
+
+    public checkNeighbours() {
+        for (const triangle of this.allTriangles) {
+            if (triangle == this) continue;
+            const dx = triangle.x - this.x;
+            const dy = triangle.y - this.y;
+            const dist = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+            if (dist < this.R * 2.5)
+                this.neighbours.push(triangle);
+        }
+    }
+
+    public setRepellingForce() {
+        if (this.neighbours.length == 0) {
+            this.targetAngle = this.desiredAngle;
+            return ;
+        }
+        let avgDx = 0;
+        let avgDy = 0;
+
+        for (const neighbour of this.neighbours) {
+            avgDx += -(neighbour.x - this.x);
+            avgDy += -(neighbour.y - this.y);
+        }
+        const meanVec = {x: avgDx / this.neighbours.length, y: avgDy / this.neighbours.length};
+        const repelAngle = Math.atan2(meanVec.y, meanVec.x);
+        const targetVec = {x: Math.cos(this.desiredAngle), y: Math.sin(this.desiredAngle)};
+        const repelVec = {x: Math.cos(repelAngle), y: Math.sin(repelAngle)};
+        const blendVec = {x: lerp(targetVec.x, repelVec.x, 0.8), y: lerp(targetVec.y, repelVec.y, 0.8)};
+        this.targetAngle = Math.atan2(blendVec.y, blendVec.x);
+        this.neighbours = [];
+        // console.log(this.targetAngle);
     }
 
     public setTargetAngle() {
         const targetVec = {dx: this.target.x - this.center.x, dy: this.target.y - this.center.y}; 
-        this.targetAngle = Math.atan2(targetVec.dy, targetVec.dx)
+        this.desiredAngle = Math.atan2(targetVec.dy, targetVec.dx)
     }
 
     public update() {
-        // const newAngleRadians = (this.targetAngle * Math.PI) / 180;
-        // this.angle = (this.angle + newAngleRadians) % (2 * Math.PI);
+        this.setTargetAngle();
+        this.checkNeighbours();
+        this.setRepellingForce();
         if (this.targetAngle != this.angle)
             this.rotateToTarget();
         if (this.center.x != this.target.x || this.center.y != this.target.y)
             this.moveToTarget();
         this.setVertices();
         this.setCenter();
-        this.setTargetAngle();
-        console.log(this.targetAngle, this.angle);
+        // console.log(this.targetAngle, this.angle);
     }
 }
 
@@ -134,29 +168,39 @@ for (let i = 0; i < 80; i++)
 {
     const triangle = new Triangle(cx, cy, R);
     triangles.push(triangle);
-    cx -= 5;
-    cy -= 5;
+    cx -= 10;
+    cy -= 10;
 }
+
+for (const triangle of triangles)
+    triangle.allTriangles = triangles;
 
 const triangle = new Triangle(500, 500, R);
 
 document.addEventListener("click", (event) => {
-    triangle.target.x = event.x;
-    triangle.target.y = event.y;
+    for (const triangle of triangles)
+    {
+        // ctx.fillStyle = "rgb(255, 0, 0)";
+        triangle.draw();
+        triangle.update();
+        triangle.target.x = event.x;
+        triangle.target.y = event.y;
+        // deg += 0.005;
+    }
 })
 
 const launchAnim = () => {
     clearScreen();
-    // let deg = 1;
-    // for (const triangle of triangles)
-    // {
-    //     ctx.fillStyle = "rgb(255, 0, 0)";
-    //     triangle.draw();
-    //     triangle.update();
-    //     // deg += 0.005;
-    // }
-    console.log(triangle.target.x, triangle.target.y);
-    console.log(triangle.x, triangle.y);
+    let deg = 1;
+    for (const triangle of triangles)
+    {
+        // ctx.fillStyle = "rgb(255, 0, 0)";
+        triangle.draw();
+        triangle.update();
+        // deg += 0.005;
+    }
+    // console.log(triangle.target.x, triangle.target.y);
+    // console.log(triangle.x, triangle.y);
     triangle.draw();
     triangle.update();
     requestAnimationFrame(launchAnim);
